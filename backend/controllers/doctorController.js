@@ -149,6 +149,21 @@ const updateDoctorProfile = async (req, res) => {
     }
 }
 
+const saveEForm = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { formData } = req.body;
+    await appointmentModel.findByIdAndUpdate(id, {
+      isCompleted: true,
+      eForm: formData
+    });
+    res.status(200).send({ success: true, message: "Appointment Completed and Form Saved" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({ success: false, message: "Error completing appointment", error });
+  }
+};
+
 // API to get dashboard data for doctor panel
 const doctorDashboard = async (req, res) => {
     try {
@@ -199,5 +214,6 @@ export {
     appointmentComplete,
     doctorDashboard,
     doctorProfile,
-    updateDoctorProfile
+    updateDoctorProfile,
+    saveEForm
 }
