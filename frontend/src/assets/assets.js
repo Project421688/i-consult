@@ -53,7 +53,6 @@ export const assets = {
     cross_icon,
     dropdown_icon,
     upload_icon,
-    stripe_logo,
     razorpay_logo
 }
 

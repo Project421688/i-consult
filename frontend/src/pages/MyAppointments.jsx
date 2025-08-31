@@ -100,11 +100,11 @@ const MyAppointments = () => {
     }
 
     // Function to make payment using CCAvenue
-    const appointmentCCAvenue = async (appointmentId) => {
+    const appointmentCCAvenue = async (appointmentId, amount) => {
         try {
             const { data } = await axios.post(backendUrl + '/api/ccavenue/request', {
                 order_id: appointmentId, // Use appointmentId as order_id
-                amount: 100, // Placeholder amount, replace with actual appointment amount
+                amount: amount, // Use actual appointment amount
                 // Add other required billing details here
                 billing_name: 'Test User',
                 billing_address: '123 Test St',
@@ -123,6 +123,7 @@ const MyAppointments = () => {
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.action = 'https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction';
+                form.target = '_self'; // Ensure it submits in the same window
 
                 const encRequestInput = document.createElement('input');
                 encRequestInput.type = 'hidden';
@@ -137,6 +138,7 @@ const MyAppointments = () => {
                 form.appendChild(accessCodeInput);
 
                 document.body.appendChild(form);
+                console.log('Attempting to submit form to CCAvenue...'); // Added for debugging
                 form.submit();
 
             } else {
@@ -180,7 +182,7 @@ const MyAppointments = () => {
                             {!item.cancelled && !item.payment && !item.isCompleted && payment !== item._id && <button onClick={() => setPayment(item._id)} className='text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-primary hover:text-white transition-all duration-300'>Pay Online</button>}
                             
                             {!item.cancelled && !item.payment && !item.isCompleted && payment === item._id && <button onClick={() => appointmentRazorpay(item._id)} className='text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-gray-100 hover:text-white transition-all duration-300 flex items-center justify-center'><img className='max-w-20 max-h-5' src={assets.razorpay_logo} alt="" /></button>}
-                            {!item.cancelled && !item.payment && !item.isCompleted && payment === item._id && <button onClick={() => appointmentCCAvenue(item._id)} className='text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-gray-100 hover:text-white transition-all duration-300 flex items-center justify-center'>Pay with CCAvenue</button>}
+                            {!item.cancelled && !item.payment && !item.isCompleted && payment === item._id && <button onClick={() => appointmentCCAvenue(item._id, item.docData.fees)} className='text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-gray-100 hover:text-white transition-all duration-300 flex items-center justify-center'>Pay with CCAvenue</button>}
                             {!item.cancelled && item.payment && !item.isCompleted && <button className='sm:min-w-48 py-2 border rounded text-[#696969]  bg-[#EAEFFF]'>Paid</button>}
 
                             {item.isCompleted && <button className='sm:min-w-48 py-2 border border-green-500 rounded text-green-500'>Completed</button>}

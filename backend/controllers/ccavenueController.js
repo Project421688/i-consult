@@ -28,7 +28,7 @@ export const ccavRequestHandler = async (req, res) => {
 
         const encryptedOrderData = ccav.getEncryptedOrder(orderParams);
 
-        res.json({ encryptedOrderData, access_code: process.env.CCAVENUE_ACCESS_CODE });
+        res.json({ success: true, encryptedOrderData, access_code: process.env.CCAVENUE_ACCESS_CODE });
 
     } catch (error) {
         console.log(error);
