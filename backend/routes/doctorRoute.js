@@ -14,6 +14,4 @@ doctorRouter.get("/profile", authDoctor, doctorProfile)
 doctorRouter.post("/update-profile", authDoctor, updateDoctorProfile)
 doctorRouter.post('/save-eform/:id', authDoctor, saveEForm);
 
-export default doctorRouter; authDoctor, getPatientHistory);
-
-export default doctorRouter;
+export default doctorRouter; authDoctor, getPatientHistory;
