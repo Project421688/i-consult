@@ -15,33 +15,9 @@ const Verify = () => {
 
     const navigate = useNavigate()
 
-    // Function to verify stripe payment
-    const verifyStripe = async () => {
+    
 
-        try {
-
-            const { data } = await axios.post(backendUrl + "/api/user/verifyStripe", { success, appointmentId }, { headers: { token } })
-
-            if (data.success) {
-                toast.success(data.message)
-            } else {
-                toast.error(data.message)
-            }
-
-            navigate("/my-appointments")
-
-        } catch (error) {
-            toast.error(error.message)
-            console.log(error)
-        }
-
-    }
-
-    useEffect(() => {
-        if (token, appointmentId, success) {
-            verifyStripe()
-        }
-    }, [token])
+    
 
     return (
         <div className='min-h-[60vh] flex items-center justify-center'>
