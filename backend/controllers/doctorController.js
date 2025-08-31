@@ -203,8 +203,7 @@ const getPatientHistory = async (req, res) => {
 export {
     loginDoctor,
     appointmentsDoctor,
-
-
+    appointmentCancel,
     doctorList,
     changeAvailablity,
     appointmentComplete,
