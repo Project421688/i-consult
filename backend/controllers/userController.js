@@ -86,7 +86,9 @@ const loginUser = async (req, res) => {
 const getProfile = async (req, res) => {
 
     try {
-        const userData = await userModel.findById(req.user.id).select('-password')
+        const { userId } = req.body
+        const userData = await userModel.findById(userId).select('-password')
+
         res.json({ success: true, userData })
 
     } catch (error) {
@@ -107,7 +109,7 @@ const updateProfile = async (req, res) => {
             return res.json({ success: false, message: "Data Missing" })
         }
 
-        await userModel.findByIdAndUpdate(req.user.id, { name, phone, address: JSON.parse(address), dob, gender })
+        await userModel.findByIdAndUpdate(userId, { name, phone, address: JSON.parse(address), dob, gender })
 
         if (imageFile) {
 
@@ -115,7 +117,7 @@ const updateProfile = async (req, res) => {
             const imageUpload = await cloudinary.uploader.upload(imageFile.path, { resource_type: "image" })
             const imageURL = imageUpload.secure_url
 
-            await userModel.findByIdAndUpdate(req.user.id, { image: imageURL })
+            await userModel.findByIdAndUpdate(userId, { image: imageURL })
         }
 
         res.json({ success: true, message: 'Profile Updated' })
@@ -131,7 +133,7 @@ const bookAppointment = async (req, res) => {
 
     try {
 
-        const { docId, slotDate, slotTime } = req.body
+        const { userId, docId, slotDate, slotTime } = req.body
         const docData = await doctorModel.findById(docId).select("-password")
 
         if (!docData.available) {
@@ -153,12 +155,12 @@ const bookAppointment = async (req, res) => {
             slots_booked[slotDate].push(slotTime)
         }
 
-        const userData = await userModel.findById(req.user.id).select("-password")
+        const userData = await userModel.findById(userId).select("-password")
 
         delete docData.slots_booked
 
         const appointmentData = {
-            userId: req.user.id,
+            userId,
             docId,
             userData,
             docData,
@@ -187,11 +189,11 @@ const bookAppointment = async (req, res) => {
 const cancelAppointment = async (req, res) => {
     try {
 
-        const { appointmentId } = req.body
+        const { userId, appointmentId } = req.body
         const appointmentData = await appointmentModel.findById(appointmentId)
 
         // verify appointment user 
-        if (appointmentData.userId.toString() !== req.user.id) {
+        if (appointmentData.userId !== userId) {
             return res.json({ success: false, message: 'Unauthorized action' })
         }
 
@@ -220,7 +222,8 @@ const cancelAppointment = async (req, res) => {
 const listAppointment = async (req, res) => {
     try {
 
-        const appointments = await appointmentModel.find({ userId: req.user.id })
+        const { userId } = req.body
+        const appointments = await appointmentModel.find({ userId })
 
         res.json({ success: true, appointments })
 
@@ -278,24 +281,9 @@ const verifyRazorpay = async (req, res) => {
     }
 }
 
-const getPrescription = async (req, res) => {
-    try {
-        const appointment = await appointmentModel.findById(req.params.appointmentId);
-        if (!appointment) {
-            return res.status(404).json({ success: false, message: "Appointment not found" });
-        }
-        if (appointment.userId.toString() !== req.user.id) {
-            return res.status(401).json({ success: false, message: "Not authorized" });
-        }
-        if (!appointment.isCompleted) {
-            return res.status(404).json({ success: false, message: "Prescription not available" });
-        }
-        res.json({ success: true, prescription: appointment.eForm });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ success: false, message: "Server error" });
-    }
-};
+
+
+
 
 export {
     loginUser,
@@ -306,6 +294,5 @@ export {
     listAppointment,
     cancelAppointment,
     paymentRazorpay,
-    verifyRazorpay,
-    getPrescription
+    verifyRazorpay
 }

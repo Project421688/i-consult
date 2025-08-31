@@ -2,7 +2,6 @@ import React, { useState, useContext, useEffect } from 'react';
 import { DoctorContext } from '../../context/DoctorContext';
 import { AppContext } from '../../context/AppContext';
 import { assets } from '../../assets/assets';
-import axios from 'axios';
 
 // CSS for the MedicalForm component
 const medicalFormStyles = `
@@ -166,9 +165,8 @@ const medicalFormStyles = `
   }
 `;
 
-const MedicalForm = ({ appointment, onSave, profileData, dToken, backendUrl }) => {
+const MedicalForm = ({ appointment, onSave, profileData }) => {
   const { calculateAge } = useContext(AppContext);
-  const [patientHistory, setPatientHistory] = useState([]);
   const [formData, setFormData] = useState({
     patientName: appointment.userData.name || '',
     patientContact: appointment.userData.phone || '',
@@ -186,22 +184,6 @@ const MedicalForm = ({ appointment, onSave, profileData, dToken, backendUrl }) =
     diagnosis: '',
     advice: '',
   });
-
-  useEffect(() => {
-    const fetchPatientHistory = async () => {
-      try {
-        const { data } = await axios.get(`${backendUrl}/api/doctor/patient-history/${appointment.userData._id}`, { headers: { token: dToken } });
-        if (data.success) {
-          setPatientHistory(data.history);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    if (dToken && backendUrl && appointment.userData._id) {
-        fetchPatientHistory();
-    }
-  }, [appointment.userData._id, backendUrl, dToken]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -275,20 +257,6 @@ const MedicalForm = ({ appointment, onSave, profileData, dToken, backendUrl }) =
             <div className="small">Prescription ID: <strong>PR-{appointment._id.slice(0, 6)}</strong></div>
           </div>
         </header>
-
-        {patientHistory.length > 0 && (
-          <div className="patient-history" style={{marginBottom: '20px', marginTop: '20px'}}>
-            <h3 style={{marginBottom: '10px'}}>Patient's Medical History</h3>
-            {patientHistory.map((record, index) => (
-              <div key={index} className="history-record" style={{border: '1px solid #eee', padding: '10px', borderRadius: '5px', marginBottom: '10px'}}>
-                <p><strong>Date:</strong> {new Date(record.date).toLocaleDateString()}</p>
-                <p><strong>Doctor:</strong> {record.docData.name}</p>
-                {record.eForm && record.eForm.chiefComplaints && <p><strong>Complaints:</strong> {record.eForm.chiefComplaints.join(', ')}</p>}
-                {record.eForm && record.eForm.diagnosis && <p><strong>Diagnosis:</strong> {record.eForm.diagnosis}</p>}
-              </div>
-            ))}
-          </div>
-        )}
 
         <hr style={{ margin: '14px 0', border: 'none', borderTop: '1px solid #eef4f6' }} />
 
@@ -418,7 +386,7 @@ const MedicalForm = ({ appointment, onSave, profileData, dToken, backendUrl }) =
 const DoctorAppointments = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const { dToken, appointments, getAppointments, cancelAppointment, completeAppointment, profileData, getProfileData } = useContext(DoctorContext);
-  const { slotDateFormat, calculateAge, currency, backendUrl } = useContext(AppContext);
+  const { slotDateFormat, calculateAge, currency } = useContext(AppContext);
 
   useEffect(() => {
     if (dToken) {
@@ -440,7 +408,7 @@ const DoctorAppointments = () => {
     <div className='w-full max-w-6xl m-5'>
       <p className='mb-3 text-lg font-medium'>All Appointments</p>
       {selectedAppointment && profileData ? (
-        <MedicalForm appointment={selectedAppointment} onSave={handleFormSave} profileData={profileData} dToken={dToken} backendUrl={backendUrl} />
+        <MedicalForm appointment={selectedAppointment} onSave={handleFormSave} profileData={profileData} />
       ) : (
         <div className='bg-white border rounded text-sm max-h-[80vh] overflow-y-scroll'>
           <div className='max-sm:hidden grid grid-cols-[0.5fr_2fr_1fr_1fr_3fr_1fr_1fr] gap-1 py-3 px-6 border-b'>
