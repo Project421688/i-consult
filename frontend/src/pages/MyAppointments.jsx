@@ -128,7 +128,8 @@ const MyAppointments = () => {
     try {
       const { data } = await axios.get(`${backendUrl}/api/user/prescription/${appointmentId}`, { headers: { token } });
       if (data.success) {
-        const prescription = data.prescription.eForm;
+
+        const prescription = data.prescription;
         const newWindow = window.open('', '_blank');
         newWindow.document.write(`
           <html>
