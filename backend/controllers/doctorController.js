@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import doctorModel from "../models/doctorModel.js";
 import appointmentModel from "../models/appointmentModel.js";
+import userModel from "../models/userModel.js";
 
 // API for doctor Login 
 const loginDoctor = async (req, res) => {
@@ -164,6 +165,27 @@ const saveEForm = async (req, res) => {
   }
 };
 
+// API to get patient history for doctor panel
+const getPatientHistory = async (req, res) => {
+    try {
+        const { patientId } = req.params;
+        const { docId } = req.body;
+
+        // Get all completed appointments for this patient with this doctor
+        const appointments = await appointmentModel.find({ 
+            userId: patientId, 
+            docId: docId,
+            isCompleted: true 
+        }).sort({ date: -1 });
+
+        res.json({ success: true, appointments });
+
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
 // API to get dashboard data for doctor panel
 const doctorDashboard = async (req, res) => {
     try {
@@ -215,5 +237,6 @@ export {
     doctorDashboard,
     doctorProfile,
     updateDoctorProfile,
-    saveEForm
+    saveEForm,
+    getPatientHistory
 }

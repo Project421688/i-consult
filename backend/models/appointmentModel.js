@@ -12,15 +12,18 @@ const appointmentSchema = new mongoose.Schema({
     cancelled: { type: Boolean, default: false },
     payment: { type: Boolean, default: false },
     isCompleted: { type: Boolean, default: false },
-      eForm: {
+    eForm: {
+    patientName: { type: String },
+    patientContact: { type: String },
+    patientAge: { type: String },
+    patientGender: { type: String },
+    patientAddress: { type: String },
     chiefComplaint: { type: String },
     clinicalNotes: { type: String },
-    vitals: {
-      bloodPressure: { type: String },
-      pulse: { type: String },
-      temperature: { type: String },
-      weight: { type: String },
-    },
+    bloodPressure: { type: String },
+    pulse: { type: String },
+    temperature: { type: String },
+    weight: { type: String },
     prescriptions: [{
       medicine: { type: String },
       form: { type: String },
@@ -32,7 +35,7 @@ const appointmentSchema = new mongoose.Schema({
     tests: { type: String },
     diagnosis: { type: String },
     advice: { type: String },
-  },
+  }
 })
 
 const appointmentModel = mongoose.models.appointment || mongoose.model("appointment", appointmentSchema)
