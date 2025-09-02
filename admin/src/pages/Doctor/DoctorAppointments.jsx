@@ -4,6 +4,7 @@ import { AppContext } from '../../context/AppContext';
 import { assets } from '../../assets/assets';
 import EFormHistory from '../../components/EFormHistory';
 import EFormViewer from '../../components/EFormViewer';
+import PatientSearch from '../../components/PatientSearch';
 
 // CSS for the MedicalForm component
 const medicalFormStyles = `
@@ -377,6 +378,7 @@ const MedicalForm = ({ appointment, onSave, profileData, onShowHistory }) => {
                 <button type="button" className="btn ghost" onClick={() => onShowHistory(appointment.userId)}>History</button>
                 <button type="button" className="btn" onClick={handlePrint}>Preview / Print</button>
                 <button type="submit" className="btn ghost">Save & Complete</button>
+                <button type="button" className="btn ghost" onClick={() => setShowPatientSearch(true)}>All Patients</button>
               </div>
             </div>
           </footer>
@@ -390,7 +392,9 @@ const DoctorAppointments = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState(null);
+  const [selectedPatientName, setSelectedPatientName] = useState('');
   const [viewingHistoryForm, setViewingHistoryForm] = useState(null);
+  const [showPatientSearch, setShowPatientSearch] = useState(false);
   const { dToken, appointments, getAppointments, cancelAppointment, completeAppointment, profileData, getProfileData } = useContext(DoctorContext);
   const { slotDateFormat, calculateAge, currency } = useContext(AppContext);
 
@@ -413,14 +417,31 @@ const DoctorAppointments = () => {
   };
 
   const handleShowHistory = (patientId) => {
+    // Find patient name from current appointments
+    const appointment = appointments.find(apt => apt.userId === patientId);
+    const patientName = appointment ? appointment.userData.name : 'Unknown Patient';
+    
     setSelectedPatientId(patientId);
+    setSelectedPatientName(patientName);
+    setShowHistory(true);
+  };
+
+  const handleSelectPatientFromSearch = (patientId, patientName) => {
+    setSelectedPatientId(patientId);
+    setSelectedPatientName(patientName);
+    setShowPatientSearch(false);
     setShowHistory(true);
   };
 
   const handleBackFromHistory = () => {
     setShowHistory(false);
     setSelectedPatientId(null);
+    setSelectedPatientName('');
     setViewingHistoryForm(null);
+  };
+
+  const handleBackFromPatientSearch = () => {
+    setShowPatientSearch(false);
   };
 
   const handleSelectHistoryForm = (appointment) => {
@@ -433,12 +454,26 @@ const DoctorAppointments = () => {
 
   return (
     <div className='w-full max-w-6xl m-5'>
-      <p className='mb-3 text-lg font-medium'>All Appointments</p>
+      <div className="flex items-center justify-between mb-3">
+        <p className='text-lg font-medium'>All Appointments</p>
+        <button
+          onClick={() => setShowPatientSearch(true)}
+          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all"
+        >
+          View Patient History
+        </button>
+      </div>
       {viewingHistoryForm ? (
         <EFormViewer appointment={viewingHistoryForm} onBack={handleBackFromViewer} />
+      ) : showPatientSearch ? (
+        <PatientSearch 
+          onSelectPatient={handleSelectPatientFromSearch} 
+          onBack={handleBackFromPatientSearch} 
+        />
       ) : showHistory ? (
         <EFormHistory 
           patientId={selectedPatientId} 
+          patientName={selectedPatientName}
           onBack={handleBackFromHistory} 
           onSelectForm={handleSelectHistoryForm}
         />

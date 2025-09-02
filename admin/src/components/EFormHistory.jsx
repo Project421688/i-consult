@@ -3,7 +3,7 @@ import { DoctorContext } from '../context/DoctorContext';
 import { AppContext } from '../context/AppContext';
 import axios from 'axios';
 
-const EFormHistory = ({ patientId, onBack, onSelectForm }) => {
+const EFormHistory = ({ patientId, patientName, onBack, onSelectForm }) => {
   const [patientHistory, setPatientHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const { dToken } = useContext(DoctorContext);
@@ -46,7 +46,7 @@ const EFormHistory = ({ patientId, onBack, onSelectForm }) => {
         >
           ← Back
         </button>
-        <h2 className="text-xl font-medium">Patient History</h2>
+        <h2 className="text-xl font-medium">Patient History - {patientName}</h2>
       </div>
 
       <div className="bg-white border rounded">
@@ -69,6 +69,9 @@ const EFormHistory = ({ patientId, onBack, onSelectForm }) => {
                     </h3>
                     <p className="text-sm text-gray-600">
                       Date: {slotDateFormat(appointment.slotDate)} at {appointment.slotTime}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Doctor: Dr. {appointment.docData.name} ({appointment.docData.speciality})
                     </p>
                     <p className="text-sm text-gray-600">
                       Status: {appointment.isCompleted ? 'Completed' : appointment.cancelled ? 'Cancelled' : 'Pending'}
