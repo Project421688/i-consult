@@ -169,29 +169,17 @@ const saveEForm = async (req, res) => {
 const getPatientHistory = async (req, res) => {
     try {
         const { patientId } = req.params;
+        const { docId } = req.body;
 
-        // Get all completed appointments for this patient with any doctor
+        // Get all completed appointments for this patient with this doctor
         const appointments = await appointmentModel.find({ 
             userId: patientId, 
+            docId: docId,
             isCompleted: true 
-        }).populate('docData').sort({ date: -1 });
+        }).sort({ date: -1 });
 
         res.json({ success: true, appointments });
 
-    } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: error.message });
-    }
-};
-
-// API to get all patients who have had appointments
-const getAllPatients = async (req, res) => {
-    try {
-        // Get all unique patients who have had appointments
-        const appointments = await appointmentModel.find({}).distinct('userId');
-        const patients = await userModel.find({ _id: { $in: appointments } }).select('-password');
-        
-        res.json({ success: true, patients });
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: error.message });
@@ -250,6 +238,5 @@ export {
     doctorProfile,
     updateDoctorProfile,
     saveEForm,
-    getPatientHistory,
-    getAllPatients
+    getPatientHistory
 }

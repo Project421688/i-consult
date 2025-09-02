@@ -114,8 +114,6 @@ const DoctorContextProvider = (props) => {
         dashData, getDashData,
         profileData, setProfileData,
         getProfileData,
-        allPatients,
-        getAllPatients,
     }
 
     return (

@@ -61,9 +61,6 @@ const EFormViewer = ({ appointment, onBack }) => {
           <div className="text-right text-sm">
             <p><strong>Date:</strong> {new Date(appointment.date).toLocaleDateString()}</p>
             <p><strong>Prescription ID:</strong> PR-{appointment._id.slice(0, 6)}</p>
-            <p className="text-sm text-gray-600">
-              Treated by: Dr. {appointment.docData.name} ({appointment.docData.speciality})
-            </p>
           </div>
         </div>
 
