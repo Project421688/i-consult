@@ -4,6 +4,7 @@ import { AppContext } from '../../context/AppContext';
 import { assets } from '../../assets/assets';
 import EFormHistory from '../../components/EFormHistory';
 import EFormViewer from '../../components/EFormViewer';
+import PatientSearch from '../../components/PatientSearch';
 
 // CSS for the MedicalForm component
 const medicalFormStyles = `
@@ -67,6 +68,13 @@ const medicalFormStyles = `
     background: transparent;
     font-size: 14px;
     color: #111827;
+  }
+  input[type='text']:invalid, input[type='number']:invalid, textarea:invalid {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 1px #ef4444;
+  }
+  input[type='text']:valid, input[type='number']:valid, textarea:valid {
+    border-color: #10b981;
   }
   textarea {
     min-height: 80px;
@@ -167,7 +175,7 @@ const medicalFormStyles = `
   }
 `;
 
-const MedicalForm = ({ appointment, onSave, profileData, onShowHistory }) => {
+const MedicalForm = ({ appointment, onSave, profileData, onShowHistory, onShowAllPatients }) => {
   const { calculateAge } = useContext(AppContext);
   const [formData, setFormData] = useState({
     patientName: appointment.userData.name || '',
@@ -192,11 +200,70 @@ const MedicalForm = ({ appointment, onSave, profileData, onShowHistory }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Validation functions
+  const handleTextOnlyChange = (e) => {
+    const { name, value } = e.target;
+    // Allow only letters, spaces, and common punctuation
+    const textOnlyRegex = /^[a-zA-Z\s.,'-]*$/;
+    if (textOnlyRegex.test(value) || value === '') {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleNumberOnlyChange = (e) => {
+    const { name, value } = e.target;
+    // Allow only numbers and decimal point
+    const numberOnlyRegex = /^[0-9.]*$/;
+    if (numberOnlyRegex.test(value) || value === '') {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleAlphanumericChange = (e) => {
+    const { name, value } = e.target;
+    // Allow letters, numbers, spaces, and common punctuation
+    const alphanumericRegex = /^[a-zA-Z0-9\s.,'-/]*$/;
+    if (alphanumericRegex.test(value) || value === '') {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handlePhoneChange = (e) => {
+    const { name, value } = e.target;
+    // Allow only numbers, +, -, (, ), and spaces
+    const phoneRegex = /^[0-9+\-() ]*$/;
+    if (phoneRegex.test(value) || value === '') {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
   const handlePrescriptionChange = (index, e) => {
     const { name, value } = e.target;
-    const newPrescriptions = [...formData.prescriptions];
-    newPrescriptions[index] = { ...newPrescriptions[index], [name]: value };
-    setFormData(prev => ({ ...prev, prescriptions: newPrescriptions }));
+    
+    // Apply validation based on field type
+    let isValid = true;
+    if (name === 'medicine') {
+      // Medicine names can contain letters, numbers, and common symbols
+      const medicineRegex = /^[a-zA-Z0-9\s.,'-/()]*$/;
+      isValid = medicineRegex.test(value) || value === '';
+    } else if (name === 'form') {
+      // Form/strength can contain letters, numbers, and units
+      const formRegex = /^[a-zA-Z0-9\s.,'-/()mg]*$/;
+      isValid = formRegex.test(value) || value === '';
+    } else if (name === 'dosage') {
+      // Dosage can contain numbers and text
+      const dosageRegex = /^[a-zA-Z0-9\s.,'-/()]*$/;
+      isValid = dosageRegex.test(value) || value === '';
+    } else if (name === 'frequency' || name === 'duration' || name === 'notes') {
+      // These can contain text and numbers
+      const textRegex = /^[a-zA-Z0-9\s.,'-/()]*$/;
+      isValid = textRegex.test(value) || value === '';
+    }
+    
+    if (isValid) {
+      const newPrescriptions = [...formData.prescriptions];
+      newPrescriptions[index] = { ...newPrescriptions[index], [name]: value };
+      setFormData(prev => ({ ...prev, prescriptions: newPrescriptions }));
+    }
   };
 
   const addPrescription = () => {
@@ -224,12 +291,26 @@ const MedicalForm = ({ appointment, onSave, profileData, onShowHistory }) => {
 
   const resetForm = () => {
     if (window.confirm('Reset the form? All data will be lost.')) {
+      const getPatientAge = () => {
+        if (appointment.userData.dob && appointment.userData.dob !== 'Not Selected') {
+          return calculateAge(appointment.userData.dob).toString();
+        }
+        return '';
+      };
+
+      const getPatientAddress = () => {
+        if (appointment.userData.address && appointment.userData.address.line1) {
+          return `${appointment.userData.address.line1}${appointment.userData.address.line2 ? ', ' + appointment.userData.address.line2 : ''}`;
+        }
+        return '';
+      };
+
       setFormData({
         patientName: appointment.userData.name,
         patientContact: appointment.userData.phone,
-        patientAge: calculateAge(appointment.userData.dob),
+        patientAge: getPatientAge(),
         patientGender: appointment.userData.gender,
-        patientAddress: appointment.userData.address,
+        patientAddress: getPatientAddress(),
         chiefComplaint: '',
         clinicalNotes: '',
         bloodPressure: '',
@@ -266,15 +347,15 @@ const MedicalForm = ({ appointment, onSave, profileData, onShowHistory }) => {
           <div className="grid">
             <div>
               <label>Patient Name</label>
-              <input type="text" name="patientName" value={formData.patientName} onChange={handleInputChange} placeholder="e.g., Meena K" />
+              <input type="text" name="patientName" value={formData.patientName} onChange={handleTextOnlyChange} placeholder="e.g., Meena K" />
             </div>
             <div>
               <label>Contact / Mobile</label>
-              <input type="text" name="patientContact" value={formData.patientContact} onChange={handleInputChange} placeholder="+91 9XXXXXXXX" />
+              <input type="text" name="patientContact" value={formData.patientContact} onChange={handlePhoneChange} placeholder="+91 9XXXXXXXX" />
             </div>
             <div>
               <label>Age</label>
-              <input type="number" name="patientAge" value={formData.patientAge} onChange={handleInputChange} min="0" placeholder="e.g., 28" />
+              <input type="number" name="patientAge" value={formData.patientAge} onChange={handleNumberOnlyChange} min="0" max="150" placeholder="e.g., 28" />
             </div>
             <div>
               <label>Gender</label>
@@ -286,33 +367,33 @@ const MedicalForm = ({ appointment, onSave, profileData, onShowHistory }) => {
             </div>
             <div className="full">
               <label>Address</label>
-              <input type="text" name="patientAddress" value={formData.patientAddress} onChange={handleInputChange} placeholder="House/Street, City, Pincode" />
+              <input type="text" name="patientAddress" value={formData.patientAddress} onChange={handleAlphanumericChange} placeholder="House/Street, City, Pincode" />
             </div>
             <div className="full">
               <label>Chief Complaint / Presenting Problem</label>
-              <textarea name="chiefComplaint" value={formData.chiefComplaint} onChange={handleInputChange} placeholder="Patient complaint, duration, severity..."></textarea>
+              <textarea name="chiefComplaint" value={formData.chiefComplaint} onChange={handleAlphanumericChange} placeholder="Patient complaint, duration, severity..."></textarea>
             </div>
             <div className="full">
               <label>Clinical Notes / History</label>
-              <textarea name="clinicalNotes" value={formData.clinicalNotes} onChange={handleInputChange} placeholder="Relevant medical history, allergies, medications..."></textarea>
+              <textarea name="clinicalNotes" value={formData.clinicalNotes} onChange={handleAlphanumericChange} placeholder="Relevant medical history, allergies, medications..."></textarea>
             </div>
             <div className="full">
               <div className="vitals">
                 <div>
                   <label>Blood Pressure</label>
-                  <input type="text" name="bloodPressure" value={formData.bloodPressure} onChange={handleInputChange} placeholder="e.g., 120/80 mmHg" />
+                  <input type="text" name="bloodPressure" value={formData.bloodPressure} onChange={handleAlphanumericChange} placeholder="e.g., 120/80 mmHg" />
                 </div>
                 <div>
                   <label>Pulse</label>
-                  <input type="text" name="pulse" value={formData.pulse} onChange={handleInputChange} placeholder="e.g., 78 bpm" />
+                  <input type="text" name="pulse" value={formData.pulse} onChange={handleAlphanumericChange} placeholder="e.g., 78 bpm" />
                 </div>
                 <div>
                   <label>Temperature</label>
-                  <input type="text" name="temperature" value={formData.temperature} onChange={handleInputChange} placeholder="e.g., 98.6 °F" />
+                  <input type="text" name="temperature" value={formData.temperature} onChange={handleAlphanumericChange} placeholder="e.g., 98.6 °F" />
                 </div>
                 <div>
                   <label>Weight</label>
-                  <input type="text" name="weight" value={formData.weight} onChange={handleInputChange} placeholder="e.g., 60 kg" />
+                  <input type="text" name="weight" value={formData.weight} onChange={handleAlphanumericChange} placeholder="e.g., 60 kg" />
                 </div>
               </div>
             </div>
@@ -345,15 +426,15 @@ const MedicalForm = ({ appointment, onSave, profileData, onShowHistory }) => {
             </div>
             <div className="full">
               <label>Investigations / Tests Ordered</label>
-              <input type="text" name="tests" value={formData.tests} onChange={handleInputChange} placeholder="e.g., CBC, Ultrasound Pelvis" />
+              <input type="text" name="tests" value={formData.tests} onChange={handleAlphanumericChange} placeholder="e.g., CBC, Ultrasound Pelvis" />
             </div>
             <div className="full">
               <label>Diagnosis / Impression</label>
-              <textarea name="diagnosis" value={formData.diagnosis} onChange={handleInputChange} placeholder="Short diagnosis or impression..."></textarea>
+              <textarea name="diagnosis" value={formData.diagnosis} onChange={handleAlphanumericChange} placeholder="Short diagnosis or impression..."></textarea>
             </div>
             <div className="full">
               <label>Advice / Follow-up</label>
-              <textarea name="advice" value={formData.advice} onChange={handleInputChange} placeholder="Lifestyle advice, next appointment, warning signs..."></textarea>
+              <textarea name="advice" value={formData.advice} onChange={handleAlphanumericChange} placeholder="Lifestyle advice, next appointment, warning signs..."></textarea>
             </div>
           </div>
 
@@ -377,6 +458,7 @@ const MedicalForm = ({ appointment, onSave, profileData, onShowHistory }) => {
                 <button type="button" className="btn ghost" onClick={() => onShowHistory(appointment.userId)}>History</button>
                 <button type="button" className="btn" onClick={handlePrint}>Preview / Print</button>
                 <button type="submit" className="btn ghost">Save & Complete</button>
+                <button type="button" className="btn ghost" onClick={onShowAllPatients}>All Patients</button>
               </div>
             </div>
           </footer>
@@ -390,7 +472,10 @@ const DoctorAppointments = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState(null);
+  const [selectedPatientName, setSelectedPatientName] = useState('');
   const [viewingHistoryForm, setViewingHistoryForm] = useState(null);
+  const [showPatientSearch, setShowPatientSearch] = useState(false);
+  const [navigationSource, setNavigationSource] = useState(''); // Track where navigation came from
   const { dToken, appointments, getAppointments, cancelAppointment, completeAppointment, profileData, getProfileData } = useContext(DoctorContext);
   const { slotDateFormat, calculateAge, currency } = useContext(AppContext);
 
@@ -413,14 +498,51 @@ const DoctorAppointments = () => {
   };
 
   const handleShowHistory = (patientId) => {
+    // Find patient name from current appointments
+    const appointment = appointments.find(apt => apt.userId === patientId);
+    const patientName = appointment ? appointment.userData.name : 'Unknown Patient';
+    
     setSelectedPatientId(patientId);
+    setSelectedPatientName(patientName);
+    setNavigationSource('history');
     setShowHistory(true);
   };
 
-  const handleBackFromHistory = () => {
+  const handleSelectPatientFromSearch = (patientId, patientName) => {
+    setSelectedPatientId(patientId);
+    setSelectedPatientName(patientName);
+    setShowPatientSearch(false);
+    setNavigationSource('allPatients');
+    setShowHistory(true);
+  };
+
+  const handleShowAllPatients = () => {
+    setSelectedAppointment(null);
     setShowHistory(false);
-    setSelectedPatientId(null);
     setViewingHistoryForm(null);
+    setNavigationSource('allPatients');
+    setShowPatientSearch(true);
+  };
+
+  const handleBackFromHistory = () => {
+    if (navigationSource === 'allPatients') {
+      // Go back to patient search
+      setShowHistory(false);
+      setShowPatientSearch(true);
+      setViewingHistoryForm(null);
+    } else {
+      // Go back to eForm (history button case)
+      setShowHistory(false);
+      setSelectedPatientId(null);
+      setSelectedPatientName('');
+      setViewingHistoryForm(null);
+    }
+  };
+
+  const handleBackFromPatientSearch = () => {
+    // Always go back to eForm when coming from All Patients button
+    setShowPatientSearch(false);
+    setNavigationSource('');
   };
 
   const handleSelectHistoryForm = (appointment) => {
@@ -428,19 +550,31 @@ const DoctorAppointments = () => {
   };
 
   const handleBackFromViewer = () => {
-    setViewingHistoryForm(null);
+    if (navigationSource === 'allPatients') {
+      setViewingHistoryForm(null);
+    } else {
+      // For history button, go back to history view
+      setViewingHistoryForm(null);
+    }
   };
 
   return (
     <div className='w-full max-w-6xl m-5'>
-      <p className='mb-3 text-lg font-medium'>All Appointments</p>
       {viewingHistoryForm ? (
         <EFormViewer appointment={viewingHistoryForm} onBack={handleBackFromViewer} />
+      ) : showPatientSearch ? (
+        <PatientSearch 
+          onSelectPatient={handleSelectPatientFromSearch} 
+          onBack={handleBackFromPatientSearch} 
+          showBackButton={true}
+        />
       ) : showHistory ? (
         <EFormHistory 
           patientId={selectedPatientId} 
+          patientName={selectedPatientName}
           onBack={handleBackFromHistory} 
           onSelectForm={handleSelectHistoryForm}
+          showAllDoctors={navigationSource === 'allPatients'}
         />
       ) : selectedAppointment && profileData ? (
         <MedicalForm 
@@ -448,8 +582,11 @@ const DoctorAppointments = () => {
           onSave={handleFormSave} 
           profileData={profileData}
           onShowHistory={handleShowHistory}
+          onShowAllPatients={handleShowAllPatients}
         />
       ) : (
+        <>
+        <p className='text-lg font-medium mb-3'>All Appointments</p>
         <div className='bg-white border rounded text-sm max-h-[80vh] overflow-y-scroll'>
           <div className='max-sm:hidden grid grid-cols-[0.5fr_2fr_1fr_1fr_3fr_1fr_1fr] gap-1 py-3 px-6 border-b'>
             <p>#</p>
@@ -486,6 +623,7 @@ const DoctorAppointments = () => {
             </div>
           ))}
         </div>
+        </>
       )}
     </div>
   );

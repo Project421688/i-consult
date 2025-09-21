@@ -1,7 +1,7 @@
 import { createContext, useState } from "react";
 import axios from 'axios'
 import { toast } from 'react-toastify'
-
+import React from 'react';
 
 export const DoctorContext = createContext()
 
@@ -13,6 +13,7 @@ const DoctorContextProvider = (props) => {
     const [appointments, setAppointments] = useState([])
     const [dashData, setDashData] = useState(false)
     const [profileData, setProfileData] = useState(false)
+    const [allPatients, setAllPatients] = useState([])
 
     // Getting Doctor appointment data from Database using API
     const getAppointments = async () => {
@@ -31,28 +32,28 @@ const DoctorContextProvider = (props) => {
             toast.error(error.message)
         }
     }
+    
     const completeAppointment = async (appointmentId, formData) => {
-  try {
-    const response = await axios.post(`${backendUrl}/api/doctor/save-eform/${appointmentId}`, { formData }, {
-      headers: { dToken }
-    });
-    if (response.data.success) {
-      toast.success(response.data.message);
-      getAppointments();
-    } else {
-      toast.error(response.data.message);
-    }
-  } catch (error) {
-    toast.error("Failed to save form");
-  }
-};
+        try {
+            const response = await axios.post(`${backendUrl}/api/doctor/save-eform/${appointmentId}`, { formData }, {
+                headers: { dToken }
+            });
+            if (response.data.success) {
+                toast.success(response.data.message);
+                getAppointments();
+            } else {
+                toast.error(response.data.message);
+            }
+        } catch (error) {
+            toast.error("Failed to save form");
+        }
+    };
 
     // Getting Doctor profile data from Database using API
     const getProfileData = async () => {
         try {
 
             const { data } = await axios.get(backendUrl + '/api/doctor/profile', { headers: { dToken } })
-            console.log(data.profileData)
             setProfileData(data.profileData)
 
         } catch (error) {
@@ -84,7 +85,20 @@ const DoctorContextProvider = (props) => {
 
     }
 
- 
+    // Getting all patients data from Database using API
+    const getAllPatients = async () => {
+        try {
+            const { data } = await axios.get(backendUrl + '/api/doctor/all-patients', { headers: { dToken } })
+            if (data.success) {
+                setAllPatients(data.patients)
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            console.log(error)
+            toast.error(error.message)
+        }
+    }
 
     // Getting Doctor dashboard data using API
     const getDashData = async () => {
@@ -114,6 +128,8 @@ const DoctorContextProvider = (props) => {
         dashData, getDashData,
         profileData, setProfileData,
         getProfileData,
+        allPatients,
+        getAllPatients,
     }
 
     return (
@@ -121,7 +137,6 @@ const DoctorContextProvider = (props) => {
             {props.children}
         </DoctorContext.Provider>
     )
-
 
 }
 
