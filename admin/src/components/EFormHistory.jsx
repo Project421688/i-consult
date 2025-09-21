@@ -3,10 +3,10 @@ import { DoctorContext } from '../context/DoctorContext';
 import { AppContext } from '../context/AppContext';
 import axios from 'axios';
 
-const EFormHistory = ({ patientId, onBack, onSelectForm }) => {
+const EFormHistory = ({ patientId, patientName, onBack, onSelectForm, showAllDoctors = false }) => {
   const [patientHistory, setPatientHistory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { dToken } = useContext(DoctorContext);
+  const { dToken, profileData } = useContext(DoctorContext);
   const { backendUrl, slotDateFormat } = useContext(AppContext);
 
   useEffect(() => {
@@ -20,7 +20,16 @@ const EFormHistory = ({ patientId, onBack, onSelectForm }) => {
         { headers: { dToken } }
       );
       if (data.success) {
-        setPatientHistory(data.appointments);
+        let appointments = data.appointments;
+        
+        // If showAllDoctors is false, filter to show only current doctor's appointments
+        if (!showAllDoctors && profileData) {
+          appointments = appointments.filter(appointment => 
+            appointment.docData._id === profileData._id
+          );
+        }
+        
+        setPatientHistory(appointments);
       }
     } catch (error) {
       console.error('Error fetching patient history:', error);
@@ -46,7 +55,7 @@ const EFormHistory = ({ patientId, onBack, onSelectForm }) => {
         >
           ← Back
         </button>
-        <h2 className="text-xl font-medium">Patient History</h2>
+        <h2 className="text-xl font-medium">Patient History - {patientName}</h2>
       </div>
 
       <div className="bg-white border rounded">
@@ -69,6 +78,9 @@ const EFormHistory = ({ patientId, onBack, onSelectForm }) => {
                     </h3>
                     <p className="text-sm text-gray-600">
                       Date: {slotDateFormat(appointment.slotDate)} at {appointment.slotTime}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Doctor: Dr. {appointment.docData.name} ({appointment.docData.speciality})
                     </p>
                     <p className="text-sm text-gray-600">
                       Status: {appointment.isCompleted ? 'Completed' : appointment.cancelled ? 'Cancelled' : 'Pending'}
